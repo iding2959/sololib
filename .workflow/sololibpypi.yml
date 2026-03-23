@@ -1,1 +1,41 @@
+name: sololibpypi
 
+on:
+  push:
+    tags:
+      - 'v*' # 仅在推送版本标签时触发，如 v0.1.0
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: sololib # 指向你仓库中设置的环境名称
+    # 启用 Trusted Publishing 所需权限（推荐方式，无需配置 TOKEN）
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          # 启用缓存以进一步加快后续运行速度
+          enable-cache: true
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        # 如果你有 uv.lock 文件，这会确保环境完全一致
+        run: uv sync --all-extras --dev
+
+      - name: Build package
+        # uv 会自动根据 pyproject.toml 构建 sdist 和 wheel
+        run: uv build
+
+      - name: Publish to PyPI
+        # 使用官方 Action 进行发布
+        uses: pypa/gh-action-pypi-publish@release/v1
