@@ -4,11 +4,26 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sololib"
-version = "0.2.0"
+version = "0.3.0"
 description = "A simple Python library"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "httpx",
+    "packaging",
+    "pydantic",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+image = [
+    "numpy",
+    "opencv-python",
+]
+win32 = [
+    "psutil",
+    "pywin32",
+]
 
 [project.scripts]
 sololib = "sololib:main"

@@ -1,15 +1,29 @@
 """
 image_util - 图像处理工具函数
+
+需要可选依赖：pip install sololib[image]
 """
 import logging
 from typing import Union
 
-import cv2
-import numpy as np
+try:
+    import cv2
+    import numpy as np
+except ImportError:
+    cv2 = None  # type: ignore[assignment]
+    np = None  # type: ignore[assignment]
 
 from sololib.utils.decorator_util import retry
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_cv2():
+    if cv2 is None:
+        raise ImportError(
+            "opencv-python and numpy are required for image utilities. "
+            "Install with: pip install sololib[image]"
+        )
 
 
 def resize_template(
@@ -29,6 +43,7 @@ def resize_template(
     :param target_height: 目标高度
     :return: 缩放后的模板图像
     """
+    _ensure_cv2()
     if origin_height == target_height and origin_width == target_width:
         return template
     # 计算缩放比例
@@ -53,6 +68,7 @@ def template_matching(
     """
     模板匹配, 返回大于阈值的最佳坐标，x1, y1, x2, y2
     """
+    _ensure_cv2()
     image = session.screenshot(format='opencv')
     height, width, _ = image.shape
     target_res = (width, height)

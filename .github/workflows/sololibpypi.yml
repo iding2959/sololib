@@ -29,8 +29,7 @@ jobs:
         run: uv python install
 
       - name: Install dependencies
-        # 如果你有 uv.lock 文件，这会确保环境完全一致
-        run: uv sync --all-extras --dev
+        run: uv sync --extra image --dev
 
       - name: Build package
         # uv 会自动根据 pyproject.toml 构建 sdist 和 wheel

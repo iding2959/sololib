@@ -18,7 +18,11 @@ from sololib.utils.cmd_util import run_command
 from sololib.utils.decorator_util import retry
 from sololib.utils.dict_util import merge_dicts
 from sololib.utils.httpx_util import UnauthorizedError, post_data
-from sololib.utils.image_util import resize_template, template_matching
+# image（可选依赖）
+try:
+    from sololib.utils.image_util import resize_template, template_matching
+except ImportError:
+    pass
 from sololib.utils.response_util import ResponseModel, error, result, result_page, success
 from sololib.utils.version_util import check_package_update, get_current_version, update_package
 from sololib.utils.yaml_util import load_config
