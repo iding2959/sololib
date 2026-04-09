@@ -29,11 +29,12 @@ jobs:
         run: uv python install
 
       - name: Install dependencies
-        run: uv sync --extra image --dev
+        run: uv sync --dev
 
       - name: Build package
-        # uv 会自动根据 pyproject.toml 构建 sdist 和 wheel
-        run: uv build
+        # 构建的 wheel/sdist 会包含 pyproject.toml 中声明的所有可选依赖元数据
+        # 用户安装时可正常使用 uv add sololib[image] / sololib[win32]
+        run: uv build --sdist --wheel
 
       - name: Publish to PyPI
         # 使用官方 Action 进行发布
