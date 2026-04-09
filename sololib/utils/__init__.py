@@ -8,6 +8,7 @@ sololib.utils - 通用工具函数集
     dict_util       字典操作
     httpx_util      异步 HTTP 请求
     image_util      图像处理
+    logru_util      日志配置（基于 loguru）
     response_util   统一响应模型
     version_util    包版本检查与更新
     win32_util      Windows 窗口/进程管理
@@ -18,6 +19,11 @@ from sololib.utils.cmd_util import run_command
 from sololib.utils.decorator_util import retry
 from sololib.utils.dict_util import merge_dicts
 from sololib.utils.httpx_util import UnauthorizedError, post_data
+# logru（可选依赖）
+try:
+    from sololib.utils.logru_util import get_logger, logger, setup_logger
+except ImportError:
+    pass
 # image（可选依赖）
 try:
     from sololib.utils.image_util import resize_template, template_matching
@@ -52,6 +58,10 @@ __all__ = [
     # httpx
     "UnauthorizedError",
     "post_data",
+    # logru
+    "get_logger",
+    "logger",
+    "setup_logger",
     # image
     "resize_template",
     "template_matching",
