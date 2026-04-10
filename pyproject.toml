@@ -9,10 +9,11 @@ description = "A simple Python library"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "httpx",
-    "packaging",
+    "httpx>=0.28.1",
+    "nacos-sdk-python>=3.0.4",
+    "packaging>=26.0",
     "pydantic",
-    "pyyaml",
+    "pyyaml>=6.0.3",
 ]
 
 [project.optional-dependencies]

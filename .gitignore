@@ -12,3 +12,4 @@ data
 *.db
 *.log
 .env
+sololib/configs/app.yaml

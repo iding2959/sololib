@@ -4,15 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概览
 
-**sololib** 是一个 Python 工具包（v0.2.0），提供两大功能模块：
+**sololib** 是一个 Python 工具包（v0.3.5），提供三大功能模块：
 1. **语料生成** (`sololib.corpus`) — 基于模板变量填充的中英文对话数据生成
 2. **通用工具集** (`sololib.utils`) — HTTP、图像处理、装饰器、配置加载等实用函数
+3. **Nacos 配置中心** (`sololib.configs`) — 基于 nacos-sdk-python v3 的远程配置加载与热更新
 
 ## 开发命令
 
 ```bash
 # 安装依赖
-uv sync --all-extras --dev
+uv sync
 
 # 运行测试（直接运行主模块）
 uv run sololib
@@ -34,6 +35,9 @@ sololib/
 │   ├── __init__.py      # re-export core.py 中的 5 个公共函数
 │   ├── core.py          # 生成逻辑：_fill(), _detect_topic(), 对话组装
 │   └── data.py          # 数据层：变量池 V (30 个 key, 各 30 值)，Q/FU 模板列表
+├── configs/             # Nacos 配置中心模块
+│   ├── __init__.py      # 导出 NacosConfig, NacosConfigError, NacosStore, NacosWatcherSingle
+│   └── nacos_center.py  # 配置加载、监听、热更新（适配 nacos-sdk-python v3 异步 API）
 └── utils/               # 通用工具模块（9 个子模块）
     ├── __init__.py      # 统一导出所有工具函数
     ├── cmd_util.py      # 异步子进程命令执行
@@ -52,6 +56,15 @@ sololib/
 - **包级导出统一在 `__init__.py` 中管理**，使用 `from ... import ...` + `__all__`
 - 子模块间通过 `sololib.utils.xxx` 绝对路径交叉引用（如 `version_util` import `cmd_util` 和 `decorator_util`）
 - `win32_util` 使用 `try/except ImportError` 安全导入，非 Windows 环境静默跳过
+- `nacos_center.py` 对 nacos-sdk-python 使用分离的 try/except 安全导入（v3 包路径 `v2.nacos`，旧版 `nacos.client`）
+
+### Nacos 配置中心设计 (`configs/nacos_center.py`)
+
+- 兼容 **nacos-sdk-python >= 3.0**（全异步 gRPC API），对外暴露同步接口
+- 内部通过 `_AsyncLoop`（后台线程运行 asyncio event loop）桥接异步 SDK
+- **`NacosStore`** 为线程安全单例，支持多配置文件深合并（后加载覆盖先加载）
+- 支持配置监听（watcher），单文件变更时全量重拉保证覆盖链一致
+- 依赖声明: `nacos-sdk-python >= 3.0.4` 放在核心 `dependencies`
 
 ### 语料数据层设计 (`corpus/data.py`)
 
