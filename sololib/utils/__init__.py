@@ -1,18 +1,23 @@
-"""
-sololib.utils - 通用工具函数集
+"""sololib.utils - 通用工具函数集
 
 各子模块::
 
-    cmd_util        异步命令执行
-    decorator_util  通用装饰器（重试等）
-    dict_util       字典操作
-    httpx_util      异步 HTTP 请求
-    image_util      图像处理
-    logru_util      日志配置（基于 loguru）
-    response_util   统一响应模型
-    version_util    包版本检查与更新
-    win32_util      Windows 窗口/进程管理
-    yaml_util       YAML 配置加载
+    cmd_util        异步命令执行 (run_command)
+    decorator_util  通用装饰器 (retry)
+    dict_util       字典操作 (merge_dicts)
+    httpx_util      异步 HTTP 请求 (post_data, UnauthorizedError)
+    image_util      图像处理 (resize_template, template_matching) [可选: sololib[image]]
+    logru_util      日志配置 (setup_logger, get_logger, logger) [可选: loguru]
+    response_util   统一响应模型 (success, error, result, result_page, ResponseModel)
+    version_util    包版本检查与更新 (check_package_update, update_package, get_current_version)
+    win32_util      Windows 窗口/进程管理 [可选: sololib[win32]]
+    yaml_util       YAML 配置加载 (load_config)
+
+安装可选依赖::
+
+    pip install sololib[image]   # OpenCV + NumPy 图像处理
+    pip install sololib[win32]   # psutil + pywin32 Windows 管理
+    pip install loguru           # loguru 日志（可选）
 """
 
 from sololib.utils.cmd_util import run_command

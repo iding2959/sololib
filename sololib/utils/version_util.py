@@ -1,5 +1,11 @@
-"""
-version_util - 包版本检查与更新工具
+"""sololib.utils.version_util - PyPI 包版本检查与更新工具
+
+用法::
+
+    from sololib.utils import check_package_update, update_package, get_current_version
+
+    needs_update = check_package_update("sololib", "0.3.5")  # True if newer version available
+    update_package("sololib", "0.3.5")  # Updates via poetry
 """
 import asyncio
 import logging

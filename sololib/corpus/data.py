@@ -1,4 +1,19 @@
-"""语料库数据 - 变量池和模板"""
+"""sololib.corpus.data - 语料库变量池与模板数据
+
+提供 30 个分类变量池（每池 30 值）和 500+ 中英文问题/追问模板。
+变量通过 ``{varname}`` 占位符语法在模板中使用，由 ``core._fill()`` 随机替换。
+
+变量池分类::
+    cuisine, dish, ingredient, lang, fw, tech, sport, body, goal, city,
+    country, travel, genre, skill, subject, hobby, pet, season, music,
+    instrument, animal, planet, job, industry, relation, emotion, num,
+    period, level, color
+
+模板列表::
+    Q_EN / Q_CN — 英文/中文问题模板
+    FU_EN / FU_CN — 英文/中文追问模板
+    Q / FU — 合并列表（内部使用）
+"""
 import re
 from typing import Dict, List
 

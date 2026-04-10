@@ -1,4 +1,15 @@
-"""语料库核心生成函数"""
+"""sololib.corpus.core - 语料生成核心逻辑
+
+提供对话生成、模板填充、话题检测等核心函数。
+所有公共 API 均通过 ``sololib.corpus.__init__`` 和 ``sololib.__init__`` re-export。
+
+主要函数::
+    get_random_conversation(n=1) -> 生成 1-3 轮随机对话
+    generate_questions(n=10) -> 批量生成随机问题
+    generate_single_question() -> 生成单个随机问题
+    get_corpus_stats() -> 获取语料库统计信息
+    estimate_combinations() -> 估算不重复组合数
+"""
 import random
 import re
 from typing import List, Tuple

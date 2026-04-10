@@ -1,5 +1,16 @@
-"""
-yaml_util - YAML 配置文件加载工具
+"""sololib.utils.yaml_util - YAML 配置文件加载工具
+
+用法::
+
+    from sololib.utils import load_config
+    from dataclasses import dataclass
+
+    @dataclass
+    class AppConfig:
+        host: str
+        port: int
+
+    config = load_config("app.yaml", AppConfig)
 """
 from typing import Any, Type, TypeVar
 

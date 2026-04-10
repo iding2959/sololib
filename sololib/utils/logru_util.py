@@ -1,7 +1,16 @@
-"""
-logru_util - 基于 loguru 的日志封装
+"""sololib.utils.logru_util - 基于 loguru 的日志封装
+
+需要可选依赖：``pip install loguru``
 
 提供开箱即用的日志配置，支持控制台 + 文件输出、按级别/时间轮转、异步安全等。
+
+用法::
+
+    from sololib.utils import setup_logger, get_logger, logger
+
+    setup_logger(log_dir="logs", level="INFO", rotation="00:00", retention="7 days")
+    my_logger = get_logger(__name__)
+    logger.info("Hello, world!")
 """
 import sys
 from pathlib import Path

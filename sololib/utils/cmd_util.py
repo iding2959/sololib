@@ -1,5 +1,10 @@
-"""
-cmd_util - 异步命令执行工具
+"""sololib.utils.cmd_util - 异步命令执行工具
+
+用法::
+
+    from sololib.utils import run_command
+    result = await run_command("ls -la", timeout=30)
+    # {"stdout": "...", "stderr": "...", "returncode": 0}
 """
 import asyncio
 import shlex

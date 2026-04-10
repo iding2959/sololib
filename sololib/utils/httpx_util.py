@@ -1,5 +1,9 @@
-"""
-httpx_util - 基于 httpx 的异步 HTTP 请求工具
+"""sololib.utils.httpx_util - 基于 httpx 的异步 HTTP 请求工具
+
+用法::
+
+    from sololib.utils import post_data
+    result = await post_data("https://api.example.com/data", {"key": "value"})
 """
 import httpx
 

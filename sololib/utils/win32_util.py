@@ -1,7 +1,16 @@
-"""
-win32_util - Windows 平台窗口与进程管理工具
+"""sololib.utils.win32_util - Windows 平台窗口与进程管理工具
+
+需要可选依赖：``pip install sololib[win32]``（psutil + pywin32）
 
 仅在 Windows 环境下可用。
+
+用法::
+
+    from sololib.utils import activate_window_by_pid, get_all_windows, check_process_exist
+
+    hwnds = get_all_windows()  # [(hwnd, pid, title), ...]
+    activated = activate_window_by_pid(pid)
+    exists = check_process_exist("python.exe")
 """
 import time
 import tkinter as tk

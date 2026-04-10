@@ -1,5 +1,16 @@
-"""
-decorator_util - 通用装饰器
+"""sololib.utils.decorator_util - 通用装饰器
+
+提供自适应同步/异步重试装饰器。
+
+用法::
+
+    from sololib.utils import retry
+
+    @retry(max_retries=3, delay=3.0)
+    def flaky_sync(): ...
+
+    @retry(max_retries=5, delay=1.0)
+    async def flaky_async(): ...
 """
 import asyncio
 import functools

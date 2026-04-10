@@ -1,5 +1,15 @@
-"""
-response_util - 统一响应模型与构造工具
+"""sololib.utils.response_util - 统一响应模型与构造工具
+
+提供 Pydantic 统一的 API 响应格式，支持成功、错误、数据和分页响应。
+
+用法::
+
+    from sololib.utils import success, error, result, result_page, ResponseModel
+
+    success()                        # code=200, message="success"
+    result({"id": 1})               # code=200, message="success", data={"id": 1}
+    error(400, "Bad request")       # code=400, message="Bad request"
+    result_page([...], total=100)   # code=200, message="success", data=[...], total=100
 """
 from typing import Any, Optional
 

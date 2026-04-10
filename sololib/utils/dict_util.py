@@ -1,5 +1,10 @@
-"""
-dict_util - 字典操作工具
+"""sololib.utils.dict_util - 字典操作工具
+
+用法::
+
+    from sololib.utils import merge_dicts
+    merged = merge_dicts({"a": {"x": 1}}, {"a": {"y": 2}})
+    # {"a": {"x": 1, "y": 2}}
 """
 
 

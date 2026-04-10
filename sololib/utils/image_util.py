@@ -1,7 +1,15 @@
-"""
-image_util - 图像处理工具函数
+"""sololib.utils.image_util - 图像处理工具函数
 
-需要可选依赖：pip install sololib[image]
+需要可选依赖：``pip install sololib[image]``（opencv-python + numpy）
+
+用法::
+
+    from sololib.utils import resize_template, template_matching
+
+    # 模板匹配（需要浏览器自动化 session）
+    coords = template_matching(session, template, origin_res=(1920, 1080), threshold=0.85)
+    if coords:
+        x1, y1, x2, y2 = coords
 """
 import logging
 from typing import Union
