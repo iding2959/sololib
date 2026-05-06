@@ -195,12 +195,30 @@ from sololib.utils import (
 Requires `pip install loguru`:
 
 ```python
-from sololib.utils import setup_logger, shutdown_logger, logger
+from sololib.utils.logru_util import logger, setup_logger, shutdown_logger
 
-setup_logger(level="INFO")
-logger.info("message")  # use the global logger
-shutdown_logger()       # flush and close handlers
+setup_logger(env="prod", enable_json=True)
+logger.info("service started")
+shutdown_logger()
 ```
+
+**Context fields:** `setup_logger` uses a dynamic text format that only displays bound context fields when they have non-default values. Three fixed keys are aliased (`request_id` → `rid`, `user_id` → `uid`, `trace_id` → `tid`), and any additional dynamic keys bind with their original names. Unset fields are hidden automatically.
+
+```python
+# Fixed keys only
+bound = logger.bind(request_id="req-123", user_id="u-42")
+bound.info("message")  # output: rid=req-123 uid=u-42
+
+# Fixed + dynamic keys
+extra = logger.bind(request_id="req-456", order_id="ORD-001")
+extra.info("message")  # output: rid=req-456 order_id=ORD-001
+```
+
+**Logging conventions:**
+- In `except` blocks, use `logger.exception(...)` — never `logger.error(e)`
+- `_patch_record` guarantees `request_id`, `user_id`, `trace_id` exist with default `-`
+- `enable_json=True` omits the `format` argument to avoid `None` type error
+- `format` uses a callable (`_build_text_format`) rather than string template, so `<`/`>` in module names are escaped
 
 ## Nacos Config Center
 

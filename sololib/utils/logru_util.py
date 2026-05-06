@@ -41,7 +41,15 @@ def _build_text_format(record: dict) -> str:
     msg = f"<level>{record['message']}</level>"
     ts_col = f"<green>{ts}</green>"
 
-    return f"{ts_col} | {level} | pid={record['process'].id} tid={record['thread'].id} | {loc}{ctx_str} | {msg}\n"
+    # 追加异常堆栈（logger.exception / logger.opt(exception=True) 时才有值）
+    exc_str = ""
+    exc = record.get("exception")
+    if exc is not None and exc[0] is not None:
+        import traceback
+        raw_exc = "".join(traceback.format_exception(*exc))
+        exc_str = "\n" + raw_exc.replace("<", r"\<").replace(">", r"\>")
+
+    return f"{ts_col} | {level} | pid={record['process'].id} tid={record['thread'].id} | {loc}{ctx_str} | {msg}{exc_str}\n"
 
 
 def _patch_record(record: dict) -> None:
