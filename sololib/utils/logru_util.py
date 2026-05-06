@@ -18,19 +18,34 @@ from loguru import logger
 _ENV = Literal["dev", "prod"]
 
 
-# 本地/开发环境下的人类可读格式。
-_TEXT_FORMAT = (
-    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
-    "<level>{level:<8}</level> | "
-    "pid={process.id} tid={thread.id} | "
-    "<cyan>{module}</cyan>:<cyan>{line}</cyan> | "
-    "rid={extra[request_id]} uid={extra[user_id]} tid={extra[trace_id]} | "
-    "<level>{message}</level>"
-)
+_LABEL_MAP = {
+    "request_id": "rid",
+    "user_id": "uid",
+    "trace_id": "tid",
+}
+
+
+def _build_text_format(record: dict) -> str:
+    """动态格式：未绑定上下文时隐藏 rid/uid/tid 及额外动态字段。"""
+    ctx = []
+    for key, val in record["extra"].items():
+        if val and val != "-":
+            label = _LABEL_MAP.get(key, key)
+            ctx.append(f"{label}={val}")
+    ctx_str = " | " + " ".join(ctx) if ctx else ""
+
+    ts = record["time"].strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    level = f"<level>{record['level'].name:<8}</level>"
+    mod = record["module"].replace("<", r"\<").replace(">", r"\>")
+    loc = f"<cyan>{mod}</cyan>:<cyan>{record['line']}</cyan>"
+    msg = f"<level>{record['message']}</level>"
+    ts_col = f"<green>{ts}</green>"
+
+    return f"{ts_col} | {level} | pid={record['process'].id} tid={record['thread'].id} | {loc}{ctx_str} | {msg}\n"
 
 
 def _patch_record(record: dict) -> None:
-    """保证上下文字段存在，避免格式化占位符报错。"""
+    """保证上下文字段存在，避免动态格式取值时 KeyError。"""
     record["extra"].setdefault("request_id", "-")
     record["extra"].setdefault("user_id", "-")
     record["extra"].setdefault("trace_id", "-")
@@ -115,7 +130,7 @@ def setup_logger(
     logger.add(
         sys.stderr,
         level=level,
-        format=_TEXT_FORMAT,
+        format=_build_text_format,
         colorize=use_color,
         enqueue=True,
         serialize=enable_json,
@@ -136,7 +151,7 @@ def setup_logger(
         "diagnose": is_dev,
     }
     if not enable_json:
-        _file_kwargs["format"] = _TEXT_FORMAT
+        _file_kwargs["format"] = _build_text_format
 
     logger.add(log_path / "app.log", **_file_kwargs)
 
