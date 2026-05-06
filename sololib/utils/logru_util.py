@@ -124,35 +124,26 @@ def setup_logger(
     )
 
     # 主业务日志文件：INFO 及以上
-    logger.add(
-        log_path / "app.log",
-        level="INFO",
-        format=_TEXT_FORMAT if not enable_json else None,
-        rotation=rotation,
-        retention=retention,
-        compression=compression,
-        enqueue=True,
-        serialize=enable_json,
-        encoding="utf-8",
-        backtrace=is_dev,
-        diagnose=is_dev,
-    )
+    _file_kwargs: dict = {
+        "level": "INFO",
+        "rotation": rotation,
+        "retention": retention,
+        "compression": compression,
+        "enqueue": True,
+        "serialize": enable_json,
+        "encoding": "utf-8",
+        "backtrace": is_dev,
+        "diagnose": is_dev,
+    }
+    if not enable_json:
+        _file_kwargs["format"] = _TEXT_FORMAT
+
+    logger.add(log_path / "app.log", **_file_kwargs)
 
     # 可选错误日志文件：ERROR 及以上
     if add_error_file:
-        logger.add(
-            log_path / "error.log",
-            level="ERROR",
-            format=_TEXT_FORMAT if not enable_json else None,
-            rotation=rotation,
-            retention=retention,
-            compression=compression,
-            enqueue=True,
-            serialize=enable_json,
-            encoding="utf-8",
-            backtrace=is_dev,
-            diagnose=is_dev,
-        )
+        _error_kwargs = {**_file_kwargs, "level": "ERROR"}
+        logger.add(log_path / "error.log", **_error_kwargs)
 
     if catch_unhandled:
         _install_excepthook()
