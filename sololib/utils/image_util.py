@@ -12,7 +12,6 @@
         x1, y1, x2, y2 = coords
 """
 import logging
-from typing import Union
 
 try:
     import cv2
@@ -89,7 +88,7 @@ def template_matching(
             gray_template = cv2.cvtColor(resized_template, cv2.COLOR_BGR2GRAY)
         else:
             gray_image = image
-            gray_template = template
+            gray_template = resized_template
         # 使用模板匹配算法
         result = cv2.matchTemplate(gray_image, gray_template, cv2.TM_CCOEFF_NORMED)
 

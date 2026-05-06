@@ -42,7 +42,9 @@ def retry(max_retries: int = 3, delay: float = 3.0):
                         logger.warning("Attempt %s/%s failed: %s", attempt + 1, max_retries, e)
                         if attempt < max_retries - 1:
                             await asyncio.sleep(delay)
-                raise Exception(f"All {max_retries} attempts failed. Last error: {last_exception}")
+                raise RuntimeError(
+                    f"All {max_retries} attempts failed. Last error: {last_exception}"
+                ) from last_exception
 
             return async_wrapper
 
@@ -58,7 +60,9 @@ def retry(max_retries: int = 3, delay: float = 3.0):
                         logger.warning("Attempt %s/%s failed: %s", attempt + 1, max_retries, e)
                         if attempt < max_retries - 1:
                             time.sleep(delay)
-                raise Exception(f"All {max_retries} attempts failed. Last error: {last_exception}")
+                raise RuntimeError(
+                    f"All {max_retries} attempts failed. Last error: {last_exception}"
+                ) from last_exception
 
             return sync_wrapper
 

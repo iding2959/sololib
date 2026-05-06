@@ -148,6 +148,14 @@ def setup_logger(
 __all__ = ["logger", "setup_logger"]
 
 
+def get_logger():
+    """返回 Loguru 全局 logger，兼容 sololib.utils 导出。"""
+    return logger
+
+
+__all__ = ["logger", "setup_logger", "get_logger"]
+
+
 # =========================
 # 使用示例（必须）
 # =========================
