@@ -32,7 +32,7 @@ except ImportError:
 # image（可选依赖）
 try:
     from sololib.utils.image_util import resize_template, template_matching
-except ImportError:
+except (ImportError, AttributeError):
     pass
 from sololib.utils.response_util import ResponseModel, error, result, result_page, success
 from sololib.utils.version_util import check_package_update, get_current_version, update_package

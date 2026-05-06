@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sololib"
-version = "0.3.7.1"
+version = "0.3.7.2"
 description = "Python toolkit for corpus generation, utility functions, and Nacos config center"
 readme = "README.md"
 requires-python = ">=3.11"

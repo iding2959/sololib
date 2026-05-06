@@ -11,14 +11,16 @@
     if coords:
         x1, y1, x2, y2 = coords
 """
+from __future__ import annotations
+
 import logging
 
 try:
     import cv2
     import numpy as np
 except ImportError:
-    cv2 = None  # type: ignore[assignment]
-    np = None  # type: ignore[assignment]
+    cv2 = None
+    np = None
 
 from sololib.utils.decorator_util import retry
 
