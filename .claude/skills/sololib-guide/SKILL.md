@@ -1,16 +1,16 @@
 ---
 name: sololib-guide
-description: Guide for using the sololib Python toolkit — a library for corpus generation (template-based Q&A in Chinese/English), general-purpose utilities (async commands, HTTP, retry decorator, dict merge, Pydantic response models, version checking, YAML config loading, image template matching, Windows window management), and Nacos config center (remote config loading with hot-reload). Use when working with sololib, adding features to it, or integrating it into other projects.
+description: Guide for using the sololib Python toolkit — a library for corpus generation (template-based Q&A in Chinese/English), general-purpose utilities (async commands, HTTP, retry decorator, dict merge, Pydantic response models, version checking, YAML config loading, image template matching, Windows window management, loguru logging), and Nacos config center (remote config loading with hot-reload). Use when working with sololib, adding features to it, or integrating it into other projects.
 ---
 
 # sololib Usage Guide
 
 ## Overview
 
-**sololib** is a Python toolkit (v0.3.7+) with three main modules:
+**sololib** is a Python toolkit (v0.3.7.1) with three main modules:
 
 1. **Corpus Generation** (`sololib.corpus`) — Template-based Chinese/English dialogue data generation
-2. **General Utilities** (`sololib.utils`) — Async commands, HTTP, retry decorator, dict merge, Pydantic responses, version checking, YAML config, image matching, Windows management
+2. **General Utilities** (`sololib.utils`) — Async commands, HTTP, retry decorator, dict merge, Pydantic responses, version checking, YAML config, image matching, Windows management, loguru logging
 3. **Nacos Config Center** (`sololib.configs`) — Remote config loading with hot-reload via nacos-sdk-python v3
 
 ## Corpus Generation
@@ -80,7 +80,7 @@ async def flaky_async():
 
 - Automatically detects sync/async and uses appropriate sleep (`time.sleep` vs `asyncio.sleep`)
 - Logs warnings on each attempt
-- Raises `Exception` with all attempts failed message after exhaustion
+- Raises `RuntimeError` with all attempts failed message after exhaustion
 
 ### run_command
 
@@ -195,10 +195,11 @@ from sololib.utils import (
 Requires `pip install loguru`:
 
 ```python
-from sololib.utils import setup_logger, get_logger, logger
+from sololib.utils import setup_logger, shutdown_logger, logger
 
 setup_logger(level="INFO")
-log = get_logger("my_module")
+logger.info("message")  # use the global logger
+shutdown_logger()       # flush and close handlers
 ```
 
 ## Nacos Config Center
@@ -206,7 +207,7 @@ log = get_logger("my_module")
 Requires `nacos-sdk-python >= 3.0.4` (included in core dependencies).
 
 ```python
-from sololib.configs import NacosConfig, NacosStore
+from sololib.configs import NacosConfig, NacosStore, NacosWatcherSingle, NacosConfigError
 
 nacos_config = NacosConfig(
     server_addresses="127.0.0.1:9848",
@@ -218,13 +219,13 @@ nacos_config = NacosConfig(
     ],
 )
 store = NacosStore(nacos_config, is_watcher=True)
-config = store.get_config()
+config = store.get_config()  # merged dict from all configured files
 store.close()
 ```
 
 ### Key Classes
 
-- `NacosConfig` — Pydantic config parameters model
+- `NacosConfig` — Pydantic config parameters model (has nested `ConfigItem` class)
 - `NacosStore` — Thread-safe singleton, supports multi-config deep merge (later-loaded overwrites earlier)
 - `NacosWatcherSingle` — Single file watcher with hot-reload
 - `NacosConfigError` — Custom exception

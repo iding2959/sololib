@@ -7,7 +7,7 @@
     dict_util       字典操作 (merge_dicts)
     httpx_util      异步 HTTP 请求 (post_data, UnauthorizedError)
     image_util      图像处理 (resize_template, template_matching) [可选: sololib[image]]
-    logru_util      日志配置 (setup_logger, get_logger, logger) [可选: loguru]
+    logru_util      日志配置 (setup_logger, shutdown_logger, logger) [可选: loguru]
     response_util   统一响应模型 (success, error, result, result_page, ResponseModel)
     version_util    包版本检查与更新 (check_package_update, update_package, get_current_version)
     win32_util      Windows 窗口/进程管理 [可选: sololib[win32]]
@@ -26,7 +26,7 @@ from sololib.utils.dict_util import merge_dicts
 from sololib.utils.httpx_util import UnauthorizedError, post_data
 # logru（可选依赖）
 try:
-    from sololib.utils.logru_util import get_logger, logger, setup_logger
+    from sololib.utils.logru_util import logger, setup_logger, shutdown_logger
 except ImportError:
     pass
 # image（可选依赖）
@@ -64,7 +64,7 @@ __all__ = [
     "UnauthorizedError",
     "post_data",
     # logru
-    "get_logger",
+    "shutdown_logger",
     "logger",
     "setup_logger",
     # image

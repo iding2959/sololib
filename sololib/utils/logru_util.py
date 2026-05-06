@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Literal
@@ -23,23 +24,23 @@ _TEXT_FORMAT = (
     "<level>{level:<8}</level> | "
     "pid={process.id} tid={thread.id} | "
     "<cyan>{module}</cyan>:<cyan>{line}</cyan> | "
-    "rid={extra[request_id]} uid={extra[user_id]} | "
+    "rid={extra[request_id]} uid={extra[user_id]} tid={extra[trace_id]} | "
     "<level>{message}</level>"
 )
-
-
-# 幂等标记：便于排查与识别初始化状态。
-_IS_CONFIGURED = False
 
 
 def _patch_record(record: dict) -> None:
     """保证上下文字段存在，避免格式化占位符报错。"""
     record["extra"].setdefault("request_id", "-")
     record["extra"].setdefault("user_id", "-")
+    record["extra"].setdefault("trace_id", "-")
 
 
 def _install_excepthook() -> None:
-    """接管未捕获异常并写入 Loguru。"""
+    """接管未捕获异常并写入 Loguru（幂等安装，避免重复覆盖）。"""
+    if getattr(sys.excepthook, "_loguru_installed", False):
+        return
+
     original_hook = sys.excepthook
 
     def _hook(exc_type, exc_value, exc_traceback):  # type: ignore[no-untyped-def]
@@ -47,18 +48,17 @@ def _install_excepthook() -> None:
             original_hook(exc_type, exc_value, exc_traceback)
             return
 
-        # 未捕获异常记录：这里显式传入异常三元组。
-        # 在普通 except 代码块中，必须使用 logger.exception(...)。
         logger.opt(exception=(exc_type, exc_value, exc_traceback)).error("未捕获异常")
 
+    _hook._loguru_installed = True  # type: ignore[attr-defined]
     sys.excepthook = _hook
 
 
 def setup_logger(
     *,
-    env: _ENV = "dev",
-    log_dir: str | Path = "logs",
-    level: str = "INFO",
+    env: _ENV | None = None,
+    log_dir: str | Path | None = None,
+    level: str | None = None,
     rotation: str = "00:00",
     retention: str = "7 days",
     compression: str = "zip",
@@ -73,9 +73,9 @@ def setup_logger(
     - 再重建一套一致的输出配置
 
     参数：
-        env: 环境类型，`dev` 或 `prod`。
-        log_dir: 日志目录。
-        level: 控制台最低日志级别。
+        env: 环境类型，`dev` 或 `prod`。默认从 ``LOG_ENV`` 环境变量读取。
+        log_dir: 日志目录。默认从 ``LOG_DIR`` 环境变量读取，回退为 ``logs``。
+        level: 控制台最低日志级别。未指定时 dev → DEBUG，prod → INFO。
         rotation: 轮转策略，默认每天零点切割。
         retention: 保留策略，默认保留 7 天。
         compression: 压缩格式（如 `zip`、`gz`）。
@@ -83,7 +83,19 @@ def setup_logger(
         add_error_file: 是否额外输出 `logs/error.log`（仅 ERROR 及以上）。
         catch_unhandled: 是否安装 `sys.excepthook` 捕获未处理异常。
     """
-    global _IS_CONFIGURED
+    # --- 参数默认值推导 ---
+    if env is None:
+        env = os.environ.get("LOG_ENV", "dev")
+        if env not in ("dev", "prod"):
+            env = "dev"
+
+    if log_dir is None:
+        log_dir = os.environ.get("LOG_DIR", "logs")
+
+    if level is None:
+        level = "DEBUG" if env == "dev" else "INFO"
+    else:
+        level = level.upper()
 
     # 清理全部 handler，避免重复初始化导致重复输出。
     logger.remove()
@@ -94,6 +106,9 @@ def setup_logger(
     logger.configure(patcher=_patch_record)
 
     is_dev = env == "dev"
+
+    # JSON 与彩色输出互斥：serialize=True 时 Loguru 忽略 format，
+    # 因此仅在纯文本 dev 模式下启用 colorize。
     use_color = is_dev and not enable_json
 
     # 控制台输出
@@ -112,7 +127,7 @@ def setup_logger(
     logger.add(
         log_path / "app.log",
         level="INFO",
-        format=_TEXT_FORMAT,
+        format=_TEXT_FORMAT if not enable_json else None,
         rotation=rotation,
         retention=retention,
         compression=compression,
@@ -128,7 +143,7 @@ def setup_logger(
         logger.add(
             log_path / "error.log",
             level="ERROR",
-            format=_TEXT_FORMAT,
+            format=_TEXT_FORMAT if not enable_json else None,
             rotation=rotation,
             retention=retention,
             compression=compression,
@@ -142,18 +157,13 @@ def setup_logger(
     if catch_unhandled:
         _install_excepthook()
 
-    _IS_CONFIGURED = True
+
+def shutdown_logger() -> None:
+    """关闭日志输出（移除全部 handler），用于服务优雅退出。"""
+    logger.remove()
 
 
-__all__ = ["logger", "setup_logger"]
-
-
-def get_logger():
-    """返回 Loguru 全局 logger，兼容 sololib.utils 导出。"""
-    return logger
-
-
-__all__ = ["logger", "setup_logger", "get_logger"]
+__all__ = ["logger", "setup_logger", "shutdown_logger"]
 
 
 # =========================
