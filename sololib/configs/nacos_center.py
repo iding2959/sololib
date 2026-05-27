@@ -247,10 +247,11 @@ class NacosStore:
             except Exception:
                 pass
         watchers.clear()
+        coro = service.shutdown()
         try:
-            async_loop.run(service.shutdown())
+            async_loop.run(coro)
         except Exception:
-            pass
+            coro.close()
         try:
             async_loop.stop()
         except Exception:
@@ -346,10 +347,12 @@ class NacosStore:
         self.watchers.clear()
         with self._config_lock:
             self._config = {}
+        coro = self._service.shutdown()
         try:
-            self._async_loop.run(self._service.shutdown())
+            self._async_loop.run(coro)
         except Exception as e:
             _nacos_logger.warning(f"关闭服务时出错: {e}")
+            coro.close()
         self._async_loop.stop()
         _nacos_logger.info("Nacos 连接已关闭")
 
