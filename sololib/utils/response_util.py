@@ -13,7 +13,7 @@
 """
 from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_serializer
 
 
 class ResponseModel(BaseModel):
@@ -23,6 +23,11 @@ class ResponseModel(BaseModel):
     message: str
     data: Optional[Any] = None
     total: Optional[int] = None
+
+    @model_serializer(mode='wrap')
+    def _serialize(self, handler):
+        result = handler(self)
+        return {k: v for k, v in result.items() if v is not None}
 
 
 def success() -> ResponseModel:
