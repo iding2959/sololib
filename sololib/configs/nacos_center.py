@@ -72,10 +72,12 @@ def _make_client_config(nacos_config: NacosConfig) -> "ClientConfig":
         username=nacos_config.username,
         password=nacos_config.password,
     )
-    # 将 nacos 缓存目录设置为 <项目根目录>/nacos-data，而非默认的 ~/nacos/cache/
+    # 将 nacos sdk 内部缓存/日志统一收敛到 nacos-data/.cache 子目录，
+    # 顶层 nacos-data 只放 sololib 快照文件，互不干扰。
     project_root = os.getcwd()
-    cache_dir = os.path.join(project_root, "nacos-data")
-    config.set_cache_dir(cache_dir)
+    nacos_data_dir = os.path.join(project_root, "nacos-data")
+    config.set_cache_dir(os.path.join(nacos_data_dir, ".cache"))
+    config.set_log_dir(os.path.join(nacos_data_dir, ".cache"))
     return config
 
 
@@ -369,7 +371,7 @@ class NacosStore:
         self._init_all_configs()
 
     def close(self):
-        """关闭所有监听器和客户端连接"""
+        """关闭所有监听器和客户端连接（幂等，可安全重复调用）"""
         if getattr(self, "_closed", False):
             return
         self._closed = True
@@ -379,17 +381,14 @@ class NacosStore:
         self.watchers.clear()
         with self._config_lock:
             self._config = {}
-        coro = self._service.shutdown()
-        try:
-            self._async_loop.run(coro)
-        except Exception as e:
-            _nacos_logger.warning(f"关闭服务时出错: {e}")
-            coro.close()
-        self._async_loop.stop()
-        _nacos_logger.info("Nacos 连接已关闭")
 
-    def __del__(self):
-        try:
-            self.close()
-        except Exception:
-            pass
+        # 如果 event loop 还在运行，正常关闭 service；否则跳过
+        if self._async_loop._loop and self._async_loop._loop.is_running():
+            coro = self._service.shutdown()
+            try:
+                self._async_loop.run(coro)
+            except Exception as e:
+                _nacos_logger.warning(f"关闭服务时出错: {e}")
+                coro.close()
+            self._async_loop.stop()
+        _nacos_logger.info("Nacos 连接已关闭")
