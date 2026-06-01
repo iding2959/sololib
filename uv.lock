@@ -1828,7 +1828,7 @@ wheels = [
 
 [[package]]
 name = "sololib"
-version = "0.3.8"
+version = "0.3.8.2"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

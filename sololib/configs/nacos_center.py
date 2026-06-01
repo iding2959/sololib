@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import threading
 import weakref
 from typing import TYPE_CHECKING, Callable, Optional
@@ -62,15 +63,20 @@ class NacosConfig(BaseModel):
 
 
 def _make_client_config(nacos_config: NacosConfig) -> "ClientConfig":
-    """构建 v3 ClientConfig 对象"""
+    """构建 v3 ClientConfig 对象，缓存目录使用用户项目目录"""
     if ClientConfig is None:
         raise NacosConfigError("nacos-sdk-python >= 3.0 未安装")
-    return ClientConfig(
+    config = ClientConfig(
         server_addresses=nacos_config.server_addresses,
         namespace_id=nacos_config.namespace or "",
         username=nacos_config.username,
         password=nacos_config.password,
     )
+    # 将 nacos 缓存目录设置为 <项目根目录>/nacos-data，而非默认的 ~/nacos/cache/
+    project_root = os.getcwd()
+    cache_dir = os.path.join(project_root, "nacos-data")
+    config.set_cache_dir(cache_dir)
+    return config
 
 
 def _resolve_config_info(config_info):
@@ -239,7 +245,9 @@ class NacosStore:
 
     @staticmethod
     def _cleanup(watchers: list, service, async_loop: _AsyncLoop):
-        """程序退出时清理资源（幂等）"""
+        """程序退出时清理资源（幂等，可安全重复调用）"""
+        if async_loop._loop is None or not async_loop._loop.is_running():
+            return  # 已经关闭过，跳过
         _nacos_logger.info("开始清理 Nacos 资源...")
         for watcher in watchers:
             try:
@@ -294,6 +302,29 @@ class NacosStore:
 
     # ---- 初始化与监听 ----
 
+    def _snapshot_path(self, config_info) -> str:
+        """生成本地快照文件路径：nacos-data/<data_id>+<group>+<namespace>
+
+        快照独立于 nacos-sdk 内部缓存（@@ 分隔），使用 + 分隔的可读命名，
+        存放在项目根目录下的 nacos-data/ 中。
+        """
+        data_id, group, _ = _resolve_config_info(config_info)
+        namespace = self.nacos_config.namespace or "public"
+        snapshot_dir = os.path.join(os.getcwd(), "nacos-data")
+        os.makedirs(snapshot_dir, exist_ok=True)
+        snapshot_file = f"{data_id}+{group}+{namespace}"
+        return os.path.join(snapshot_dir, snapshot_file)
+
+    def _save_snapshot(self, config_info, raw_content: str):
+        """将原始配置内容保存为本地快照文件"""
+        try:
+            path = self._snapshot_path(config_info)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(raw_content)
+            _nacos_logger.info(f"配置快照已保存: {path}")
+        except OSError as e:
+            _nacos_logger.warning(f"保存配置快照失败: {e}")
+
     def _init_all_configs(self):
         """按顺序加载所有配置，后面的覆盖前面的同名配置"""
         for config_info in self.nacos_config.configs:
@@ -302,6 +333,7 @@ class NacosStore:
                 _, _, data_type = _resolve_config_info(config_info)
                 parsed = self._parse_config(raw, data_type)
                 self._merge_config(parsed)
+                self._save_snapshot(config_info, raw)
             else:
                 _nacos_logger.warning(f"未能获取到配置: {config_info}")
 
@@ -317,11 +349,11 @@ class NacosStore:
 
     def _on_config_update(self, new_config: dict):
         """配置变更时全量重拉以保证覆盖链一致"""
-        _nacos_logger.info(f"检测到配置更新: {new_config}")
+        _nacos_logger.info("检测到配置更新，开始全量重拉")
         with self._config_lock:
             self._config = {}
         self._init_all_configs()
-        _nacos_logger.info(f"更新后的完整配置: {self._config}")
+        _nacos_logger.info("配置全量重拉完成")
 
     # ---- 公共 API ----
 
